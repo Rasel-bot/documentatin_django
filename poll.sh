@@ -113,3 +113,44 @@ True
 # Let's delete one of the choices. Use delete() for that.
 >>> c = q.choice_set.filter(choice_text__startswith="Just hacking")
 >>> c.delete()
+
+Test case
+>>> import datetime
+>>> from django.utils import timezone
+>>> from polls.models import Question
+>>> # create a Question instance with pub_date 30 days in the future
+>>> future_question = Question(pub_date=timezone.now() + datetime.timedelta(days=30))
+
+>>> # was it published recently?
+>>> future_question.was_published_recently()
+True
+
+Django test client
+>>> from django.test.utils import setup_test_environment
+>>> setup_test_environment()
+
+>>> from django.test import Client
+>>> # create an instance of the client for our use
+>>> client = Client()
+
+>>> # get a response from '/'
+>>> response = client.get("/")
+Not Found: /
+>>> # we should expect a 404 from that address; if you instead see an
+>>> # "Invalid HTTP_HOST header" error and a 400 response, you probably
+>>> # omitted the setup_test_environment() call described earlier.
+>>> response.status_code
+404
+>>> # on the other hand we should expect to find something at '/polls/'
+>>> # we'll use 'reverse()' rather than a hardcoded URL
+>>> from django.urls import reverse
+>>> response = client.get(reverse("polls:index"))
+>>> response.status_code
+200
+>>> response.content
+b'\n
+ <ul>\n
+ \n
+ <li><a href="/polls/1/">What&#x27;s up?</a></li>\n
+>>> response.context["latest_question_list"]
+<QuerySet [<Question: What's up?>]>
